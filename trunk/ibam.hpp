@@ -1,8 +1,6 @@
 // IBAM, the Intelligent Battery Monitor
 // Copyright (C) 2001-2003, Sebastian Ritterbusch (IBAM@Ritterbusch.de)
 //
-// adapted for wmibam by Florian Ragwitz <florian@mookooh.org>
-//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -38,24 +36,21 @@ using namespace std;
 #include <sys/stat.h>  // for mkdir
 #include <sys/types.h> // for mkdir
 
-class apm_status
+class battery_status
 {
-   private:
-      string driverVersion;
-      string biosVersion;
-      int    apmFlags;
-      int    acLineStatus;
-      int    batteryStatus;
-      int    batteryFlag;
-      int    remainingBatteryPercent;
-      int    remainingBatteryLifeSeconds;
-   public:
+	private:
+		int acLineStatus;
+		int batteryStatus;
+		int chargeStatus;
+		int remainingBatteryPercent;
+		int remainingBatteryLifeSeconds;
+	public:
       inline int   onBattery(void) const;
       inline int   charging(void)  const;
       inline int   percent(void)   const;
       inline int   seconds(void)   const;
-      inline void update(char *path="/proc/apm");
-      inline apm_status(char *path="/proc/apm");
+      inline void update(void);
+	  inline battery_status(void);
 };
 
 class percent_data
@@ -88,7 +83,7 @@ class ibam
    private:
       percent_data data;
       int         data_changed;    // 1 if save of ibam.rc demanded
-      apm_status  apm;
+      battery_status  apm;
       percent_data battery;
       int         battery_loaded;
       int         battery_changed;

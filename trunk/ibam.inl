@@ -1,8 +1,6 @@
 // IBAM, the Intelligent Battery Monitor
 // Copyright (C) 2001-2003, Sebastian Ritterbusch (IBAM@Ritterbusch.de)
 //
-// adapted for wmibam by Florian Ragwitz <florian@mookooh.org>
-//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -19,6 +17,7 @@
 //
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <string>
 #include <math.h>
@@ -68,64 +67,112 @@
 +             -1: Unknown
 +          8) min = minutes; sec = seconds */
 
-inline int apm_status::onBattery(void) const { return acLineStatus==0; }
-inline int apm_status::charging(void)  const { return (batteryFlag&8)!=0; }
-inline int apm_status::percent(void)   const { return remainingBatteryPercent; }
-inline int apm_status::seconds(void)   const { return remainingBatteryLifeSeconds; } 
-   
-inline void apm_status::update(char *path)
+inline int battery_status::onBattery(void) const { return acLineStatus==0; }
+inline int battery_status::charging(void)  const { return chargeStatus; }
+inline int battery_status::percent(void)   const { return remainingBatteryPercent; }
+inline int battery_status::seconds(void)   const { return remainingBatteryLifeSeconds; } 
+
+inline battery_status::battery_status(void)
 {
-   ifstream in;
-   int i;
-   in.open(path);
-   for(i=0;i<10 && in.fail();i++)
-      in.open(path);
-   if(in.fail())
-   {
-      driverVersion="";
-      biosVersion="";
-      apmFlags=0;
-      acLineStatus=0;
-      batteryStatus=0;
-      batteryFlag=0;
-      remainingBatteryPercent=-1;
-      remainingBatteryLifeSeconds=-1;
-      return;
-   }
-   char c,d;
-   in >> driverVersion;
-   in >> biosVersion;
-   in >> c >> d; // 0x
-   in >> c >> d;
-   apmFlags=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
-   in >> c >> d; // 0x
-   in >> c >> d;
-   acLineStatus=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
-   in >> c >> d; // 0x
-   in >> c >> d;
-   batteryStatus=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
-   in >> c >> d; // 0x
-   in >> c >> d;
-   batteryFlag=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
-   in >> remainingBatteryPercent >> c; // %
-   string minsec;
-   in >> remainingBatteryLifeSeconds >> minsec;
-   if(minsec=="min") remainingBatteryLifeSeconds*=60;
-#ifdef DEBUG
-   cout << "Driver Version:    " << driverVersion << endl;
-   cout << "Bios Version:      " << biosVersion << endl;
-   cout << "APM Flags:         " << apmFlags << endl;
-   cout << "AC Line Status:    " << acLineStatus << endl;
-   cout << "Battery Status:    " << batteryStatus << endl;
-   cout << "Battery Flag:      " << batteryFlag << endl;
-   cout << "Remaining Percent: " << remainingBatteryPercent << endl;
-   cout << "Remaining Seconds: " << remainingBatteryLifeSeconds << endl;
-#endif
+	update();
 }
 
-inline apm_status::apm_status(char *path)
+inline void battery_status::update(void)
 {
-   update(path);
+	string apm_path = "/proc/apm";
+	string pmu_path = "/proc/pmu";
+
+   ifstream in;
+   in.open((pmu_path+"/info").c_str());
+   if (in.is_open()) {
+#ifdef DEBUG
+	   cout << "Using pmu" << endl;
+#endif
+	   stringbuf buf;
+	   char c;
+	   int i, d, cur_charge, max_charge, batteryFlags;
+	   for (i = 0; i < 4; i++) {
+		   in.get(buf, ':');
+		   in >> c >> d;
+		   if (i == 2)
+			   acLineStatus = d;
+	   }
+	   in.close();
+	   in.open((pmu_path+"/battery_0").c_str());
+	   if (in.fail())
+		   return;
+
+	   for (i = 0; i <6; i++) {
+		   in.get(buf, ':');
+		   in >> c >> d;
+		   if (i == 0)
+			   batteryFlags = d;
+		   if (i == 1)
+			   cur_charge = d;
+		   if (i == 2)
+			   max_charge = d;
+		   if (i == 5)
+			   remainingBatteryLifeSeconds = d;
+	   }
+
+	   chargeStatus = (batteryFlags&2)==0;
+	   remainingBatteryPercent = (int)(cur_charge*100/max_charge);
+
+#ifdef DEBUG
+	   cout << "AC Line Status:    " << acLineStatus << endl;
+	   cout << "Charge Status:     " << chargeStatus << endl;
+	   cout << "Remaining Percent: " << remainingBatteryPercent << endl;
+	   cout << "Remaining Seconds: " << remainingBatteryLifeSeconds << endl;
+	   int current_status = onBattery()?1:charging()?2:0;
+	   cout << "Current Status:    " << current_status << endl;
+#endif
+	   return;
+   } 
+   in.open(apm_path.c_str());
+   if (in.is_open()) {
+#ifdef DEBUG
+	   cout << "Using apm" << endl;
+#endif
+	   int batteryFlag, apmFlags;
+	   string driverVersion, biosVersion;
+	   char c,d;
+	   in >> driverVersion;
+	   in >> biosVersion;
+	   in >> c >> d; // 0x
+	   in >> c >> d;
+	   apmFlags=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
+	   in >> c >> d; // 0x
+	   in >> c >> d;
+	   acLineStatus=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
+	   in >> c >> d; // 0x
+	   in >> c >> d;
+	   batteryStatus=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
+	   in >> c >> d; // 0x
+	   in >> c >> d;
+	   batteryFlag=(c>'9'?c-'a'+10:c-'0')*16+(d>'9'?d-'a'+10:d-'0');
+	   chargeStatus = (batteryFlag&8)!=0;
+	   in >> remainingBatteryPercent >> c; // %
+	   string minsec;
+	   in >> remainingBatteryLifeSeconds >> minsec;
+	   if(minsec=="min") remainingBatteryLifeSeconds*=60;
+#ifdef DEBUG
+	   cout << "Driver Version:    " << driverVersion << endl;
+	   cout << "Bios Version:      " << biosVersion << endl;
+	   cout << "APM Flags:         " << apmFlags << endl;
+	   cout << "AC Line Status:    " << acLineStatus << endl;
+	   cout << "Battery Flag:      " << batteryFlag << endl;
+	   cout << "Remaining Percent: " << remainingBatteryPercent << endl;
+	   cout << "Remaining Seconds: " << remainingBatteryLifeSeconds << endl;
+#endif
+	   return;
+   }
+#ifdef DEBUG
+   cout << "Can't read any data" << endl;
+#endif
+   acLineStatus=0;
+   chargeStatus=0;
+   remainingBatteryPercent=-1;
+   remainingBatteryLifeSeconds=-1;
 }
 
 inline void percent_data::size_to(int newpercents)
@@ -402,7 +449,7 @@ inline ibam::ibam(void) :
    ifstream in((home+".ibam/ibam.rc").c_str());
    string saveversion;
    in >> saveversion;
-   if(saveversion==IBAM_VERSION)
+   if(saveversion==VERSION)
       in >> lasttime >> lastpercent >> lastratio >> laststatus >> adaptive_damping_battery >> adaptive_damping_charge >> profile_logging >> profile_number >> profile_active;
    else
       data_changed=1; // force update
@@ -620,7 +667,7 @@ inline void ibam::save(void)
    if(data_changed)
    {
       ofstream out((home+".ibam/ibam.rc").c_str());
-      out << IBAM_VERSION << '\t' << currenttime 
+      out << VERSION << '\t' << currenttime 
           << '\t' << currentpercent << '\t' 
           << lastratio << '\t' << currentstatus 
           << '\t' << adaptive_damping_battery
