@@ -1,0 +1,14 @@
+2004-05-18
+* released 0.0.1
+2004-05-13
+* manpage added
+2004-05-12
+* bugfixes, cleanup
+2004-05-11
+* use ibam.{hpp,inl} instead of parsing the ibam output
+* adapted ibam.{hpp,inl} for mwibam
+2004-05-10
+* main functionality implemented
+2004-05-08
+* creation
+* scooped out wmapmload

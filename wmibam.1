@@ -1,0 +1,76 @@
+.TH "wmibam" "1" "2004-05-12" "Florian Ragwitz"
+.SH "NAME"
+wmibam \- A dockapp power monitor using ibam
+.SH "SYNOPSIS"
+.B wmibam
+.RI [ options ]
+.br 
+.SH "DESCRIPTION"
+This manual page documents briefly the
+.B wmibam
+command.
+.PP 
+\fBwmibam\fP is a WindowMaker DockApp that monitors the apm status using
+the intelligent battery monitor (ibam) by Sebastian Ritterbusch
+<Sebastian@Ritterbusch.de>.
+
+The upper half displays the remaining time you can stay on battery or
+the time left for charging the if you're working on battery or if you're
+plugged on your power supply unit. The bar below visualizes the
+percentage of battery charge. At the bottom that percentage is displayed
+numerically next to the current power state (on battery/charging/on
+psu).
+
+You can turn the backlight on/off by clicking the first mouse button. If
+battery status is below a critical level, an alarm-mode will alert you
+by turning on and off back-light. This can be stopped (and restarted) by
+clicking the mouse button 3 (right) over the application. An application
+can be launched when alarm is on to notify user that level is too low.
+By clicking with mouse button 2 (middle), the computer can be put in
+STANDBY (default) or SUSPEND mode (with CONTROL key).
+.SH "OPTIONS"
+These programs follow the usual GNU command line syntax, with long
+options starting with two dashes (`\-').
+A summary of options is included below.
+.TP 
+.B \-a, \-\-alarm <number>
+low battery level when to raise alarm (20 is default)
+.TP 
+.B \-bl, \-\-backlight
+turn on back\-light
+.TP 
+.B \-bw, \-\-broken\-wm
+activate broken window manager fix
+.TP 
+.B \-d, \-\-display <string>
+display to use
+.TP 
+.B \-h, \-\-help
+Show summary of options.
+.TP 
+.B \-i, \-\-inverval <number>
+number of secs between updates (5 is default)
+.TP 
+.B \-lc, \-\-light\-color <string>
+back\-light color(rgb:6E/C6/3B is default)
+.TP 
+.B \-n, \-\-notify <string>
+command to launch when alarm is on
+.TP 
+.B \-s, \-\-suspend <string>
+set command for suspend
+.TP 
+.B \-S, \-\-standby <string>
+set command for standby
+.TP 
+.B \-v, \-\-version
+Show version of program.
+.TP 
+.B \-w, \-\-windowed
+run the application in windowed mode
+.SH "SEE ALSO"
+.BR ibam (1),
+.br 
+.SH "AUTHOR"
+This manual page was written by Florian Ragwitz <florian@mookooh.org> modelled
+after the wmapmload manpage by Thomas Nemeth <tnemeth@free.fr>.

@@ -1,0 +1,5 @@
+Run
+
+$ make install PREFIX=$prefix
+
+to build wmibam and install it into $prefix.
