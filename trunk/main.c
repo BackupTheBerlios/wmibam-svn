@@ -28,7 +28,7 @@
  */
 
 #define PACKAGE "wmibam"
-#define VERSION "0.1"
+#define VERSION "0.0.2"
 #define IBAM_VERSION "0.3"
 
 #include <signal.h>
