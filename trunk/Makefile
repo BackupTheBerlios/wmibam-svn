@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g -Wall -O2
+CFLAGS=-g -Wall -O2 -pedantic
 
 PREFIX=/usr/local
 BINPATH=$(PREFIX)/bin
